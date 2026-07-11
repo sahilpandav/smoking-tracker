@@ -1,6 +1,4 @@
 """
-database.py
-
 This is the ONLY file that talks directly to SQLite.
 Every other file (tracker.py, analytics.py, etc.) calls functions
 from here instead of writing raw SQL themselves.
