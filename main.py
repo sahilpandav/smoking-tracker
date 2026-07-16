@@ -15,6 +15,7 @@ import database
 import tracker
 import analytics
 import reports
+import notifications
 
 from entry_dialog import AddEntryDialog
 from history_view import HistoryDialog
@@ -185,6 +186,14 @@ class SmokingTrackerApp:
         )
         backup_button.grid(row=1, column=2, padx=10, pady=(10, 0))
 
+        test_notification_button = ttk.Button(
+            button_frame,
+            text="Send Test Reminder",
+            style="Accent.TButton",
+            command=self.on_test_notification,
+        )
+        test_notification_button.grid(row=1, column=3, padx=10, pady=(10, 0))
+
     def _create_stat_card(self, parent, key, display_name, row, column):
         """
         Creates one small 'card' showing a label (e.g. 'Today') and
@@ -293,6 +302,15 @@ class SmokingTrackerApp:
     def on_open_backup(self):
         """Called when 'Backup / Restore' is clicked. Opens the backup popup."""
         BackupDialog(self.root)
+
+    def on_test_notification(self):
+        """
+        Manually triggers a limit-warning notification using today's
+        real data, so we can confirm plyer notifications work on
+        this machine before wiring up automatic scheduling.
+        """
+        today_count, daily_limit, _ = analytics.daily_limit_progress()
+        notifications.notify_limit_warning(today_count, daily_limit)
 
 
 def main():
