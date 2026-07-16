@@ -72,3 +72,11 @@ def ensure_folders_exist():
     folders = [DATABASE_DIR, BACKUP_DIR, REPORTS_DIR, LOGS_DIR, ICONS_DIR]
     for folder in folders:
         os.makedirs(folder, exist_ok=True)
+
+# ---------------------------------------------------------
+# NOTIFICATION SCHEDULING (in milliseconds, since Tkinter's
+# .after() method expects milliseconds, not seconds)
+# ---------------------------------------------------------
+LIMIT_CHECK_INTERVAL_MS = 30 * 60 * 1000       # check limit every 30 minutes
+MOTIVATIONAL_INTERVAL_MS = 3 * 60 * 60 * 1000  # motivational nudge every 3 hours
+WATER_REMINDER_INTERVAL_MS = 2 * 60 * 60 * 1000  # water reminder every 2 hours

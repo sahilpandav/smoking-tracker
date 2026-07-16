@@ -38,6 +38,7 @@ class SmokingTrackerApp:
         self._setup_style()
         self._build_dashboard()
         self.refresh_stats()
+        self._start_notification_scheduler()
 
     def _setup_window(self):
         """Configures the main window: title, size, background color."""
@@ -260,6 +261,39 @@ class SmokingTrackerApp:
 
         style.configure("Limit.Horizontal.TProgressbar", background=bar_color)
         self.progress_label.config(text=status_text)
+
+    def _start_notification_scheduler(self):
+        """
+        Kicks off all repeating background reminders. Each one is
+        independent — they don't block each other or the GUI,
+        since they're all built on Tkinter's non-blocking .after().
+        """
+        self._schedule_limit_check()
+        self._schedule_motivational_nudge()
+        self._schedule_water_reminder()
+
+    def _schedule_limit_check(self):
+        """Checks today's count against the daily limit, notifies if close/over."""
+        today_count, daily_limit, percentage = analytics.daily_limit_progress()
+
+        # Only actually notify if reasonably close to or over the limit,
+        # so this doesn't spam a notification every 30 minutes regardless.
+        if percentage >= 70:
+            notifications.notify_limit_warning(today_count, daily_limit)
+
+        # Reschedule itself to run again after the same interval —
+        # this is the "self-repeating chain" pattern explained above.
+        self.root.after(config.LIMIT_CHECK_INTERVAL_MS, self._schedule_limit_check)
+
+    def _schedule_motivational_nudge(self):
+        """Sends a motivational notification periodically."""
+        notifications.notify_motivational()
+        self.root.after(config.MOTIVATIONAL_INTERVAL_MS, self._schedule_motivational_nudge)
+
+    def _schedule_water_reminder(self):
+        """Sends a water reminder periodically."""
+        notifications.notify_water_reminder()
+        self.root.after(config.WATER_REMINDER_INTERVAL_MS, self._schedule_water_reminder)
 
     def on_add_cigarette(self):
         """
