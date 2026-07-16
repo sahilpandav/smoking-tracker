@@ -17,6 +17,7 @@ import analytics
 from entry_dialog import AddEntryDialog
 from history_view import HistoryDialog
 from charts_view import ChartsDialog
+from settings_view import SettingsDialog
 
 
 class SmokingTrackerApp:
@@ -130,6 +131,14 @@ class SmokingTrackerApp:
         )
         charts_button.grid(row=0, column=2, padx=10)
 
+        settings_button = ttk.Button(
+            button_frame,
+            text="Settings",
+            style="Accent.TButton",
+            command=self.on_open_settings,
+        )
+        settings_button.grid(row=0, column=3, padx=10)
+
     def _create_stat_card(self, parent, key, display_name, row, column):
         """
         Creates one small 'card' showing a label (e.g. 'Today') and
@@ -188,6 +197,14 @@ class SmokingTrackerApp:
     def on_view_charts(self):
         """Called when 'View Charts' is clicked. Opens the charts popup."""
         ChartsDialog(self.root)
+
+    def on_open_settings(self):
+        """
+        Called when 'Settings' is clicked. Opens the settings popup.
+        Refreshes the dashboard after saving, since price/limit
+        changes affect displayed stats.
+        """
+        SettingsDialog(self.root, on_saved=self.refresh_stats)
 
 
 def main():

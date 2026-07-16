@@ -9,6 +9,7 @@ tracker.py's job. analytics.py only looks at data and does math on it.
 import datetime
 import database
 import config
+import settings
 
 
 def _get_all_rows():
@@ -106,23 +107,27 @@ def current_streak_days():
 
 
 def money_spent_today():
-    """Money spent today, based on price-per-cigarette from config.py."""
-    return count_today() * config.DEFAULT_PRICE_PER_CIGARETTE
+    """Money spent today, based on the current price-per-cigarette setting."""
+    price = settings.load_settings()["price_per_cigarette"]
+    return count_today() * price
 
 
 def money_spent_this_week():
     """Money spent in the last 7 days."""
-    return count_this_week() * config.DEFAULT_PRICE_PER_CIGARETTE
+    price = settings.load_settings()["price_per_cigarette"]
+    return count_this_week() * price
 
 
 def money_spent_this_month():
     """Money spent in the current calendar month."""
-    return count_this_month() * config.DEFAULT_PRICE_PER_CIGARETTE
+    price = settings.load_settings()["price_per_cigarette"]
+    return count_this_month() * price
 
 
 def money_spent_lifetime():
     """Total money spent across all logged entries."""
-    return count_lifetime() * config.DEFAULT_PRICE_PER_CIGARETTE
+    price = settings.load_settings()["price_per_cigarette"]
+    return count_lifetime() * price
 
 
 def average_per_day():
