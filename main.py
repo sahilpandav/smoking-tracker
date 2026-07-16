@@ -15,6 +15,7 @@ import tracker
 import analytics
 
 from entry_dialog import AddEntryDialog
+from history_view import HistoryDialog
 
 
 class SmokingTrackerApp:
@@ -101,13 +102,24 @@ class SmokingTrackerApp:
             column = index % 4
             self._create_stat_card(cards_frame, key, display_name, row, column)
 
+        button_frame = tk.Frame(self.root, bg=config.COLOR_BG)
+        button_frame.pack(pady=25)
+
         add_button = ttk.Button(
-            self.root,
+            button_frame,
             text="+ Add Cigarette",
             style="Accent.TButton",
             command=self.on_add_cigarette,
         )
-        add_button.pack(pady=25)
+        add_button.grid(row=0, column=0, padx=10)
+
+        history_button = ttk.Button(
+            button_frame,
+            text="View History",
+            style="Accent.TButton",
+            command=self.on_view_history,
+        )
+        history_button.grid(row=0, column=1, padx=10)
 
     def _create_stat_card(self, parent, key, display_name, row, column):
         """
@@ -155,6 +167,14 @@ class SmokingTrackerApp:
         The popup calls self.refresh_stats when it saves.
         """
         AddEntryDialog(self.root, on_saved=self.refresh_stats)
+
+    def on_view_history(self):
+        """
+        Called when 'View History' is clicked. Opens the history
+        popup. on_changed is refresh_stats, so deleting an entry
+        updates the dashboard too.
+        """
+        HistoryDialog(self.root, on_changed=self.refresh_stats)
 
 
 def main():
