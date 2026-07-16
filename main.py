@@ -8,16 +8,19 @@ analytics.py, and an "Add Cigarette" button wired to tracker.py.
 
 import tkinter as tk
 from tkinter import ttk
+from tkinter import messagebox
 
 import config
 import database
 import tracker
 import analytics
+import reports
 
 from entry_dialog import AddEntryDialog
 from history_view import HistoryDialog
 from charts_view import ChartsDialog
 from settings_view import SettingsDialog
+
 
 
 class SmokingTrackerApp:
@@ -158,6 +161,22 @@ class SmokingTrackerApp:
         )
         settings_button.grid(row=0, column=3, padx=10)
 
+        export_csv_button = ttk.Button(
+            button_frame,
+            text="Export CSV",
+            style="Accent.TButton",
+            command=self.on_export_csv,
+        )
+        export_csv_button.grid(row=1, column=0, padx=10, pady=(10, 0))
+
+        export_pdf_button = ttk.Button(
+            button_frame,
+            text="Export PDF",
+            style="Accent.TButton",
+            command=self.on_export_pdf,
+        )
+        export_pdf_button.grid(row=1, column=1, padx=10, pady=(10, 0))
+
     def _create_stat_card(self, parent, key, display_name, row, column):
         """
         Creates one small 'card' showing a label (e.g. 'Today') and
@@ -252,6 +271,16 @@ class SmokingTrackerApp:
         changes affect displayed stats.
         """
         SettingsDialog(self.root, on_saved=self.refresh_stats)
+
+    def on_export_csv(self):
+        """Exports all entries to a CSV file and shows where it was saved."""
+        filepath = reports.export_csv()
+        messagebox.showinfo("Export Complete", f"CSV saved to:\n{filepath}")
+
+    def on_export_pdf(self):
+        """Exports a full PDF report and shows where it was saved."""
+        filepath = reports.export_pdf()
+        messagebox.showinfo("Export Complete", f"PDF saved to:\n{filepath}")
 
 
 def main():
