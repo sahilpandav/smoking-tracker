@@ -16,6 +16,7 @@ import analytics
 
 from entry_dialog import AddEntryDialog
 from history_view import HistoryDialog
+from charts_view import ChartsDialog
 
 
 class SmokingTrackerApp:
@@ -121,6 +122,14 @@ class SmokingTrackerApp:
         )
         history_button.grid(row=0, column=1, padx=10)
 
+        charts_button = ttk.Button(
+            button_frame,
+            text="View Charts",
+            style="Accent.TButton",
+            command=self.on_view_charts,
+        )
+        charts_button.grid(row=0, column=2, padx=10)
+
     def _create_stat_card(self, parent, key, display_name, row, column):
         """
         Creates one small 'card' showing a label (e.g. 'Today') and
@@ -175,6 +184,10 @@ class SmokingTrackerApp:
         updates the dashboard too.
         """
         HistoryDialog(self.root, on_changed=self.refresh_stats)
+
+    def on_view_charts(self):
+        """Called when 'View Charts' is clicked. Opens the charts popup."""
+        ChartsDialog(self.root)
 
 
 def main():
