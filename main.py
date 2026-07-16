@@ -14,6 +14,8 @@ import database
 import tracker
 import analytics
 
+from entry_dialog import AddEntryDialog
+
 
 class SmokingTrackerApp:
     """
@@ -149,11 +151,10 @@ class SmokingTrackerApp:
     def on_add_cigarette(self):
         """
         Called when the '+ Add Cigarette' button is clicked.
-        Logs a new entry with no extra details (trigger/mood/note),
-        then refreshes the dashboard so the numbers update instantly.
+        Opens the detailed entry popup instead of logging a blind entry.
+        The popup calls self.refresh_stats when it saves.
         """
-        tracker.add_entry()
-        self.refresh_stats()
+        AddEntryDialog(self.root, on_saved=self.refresh_stats)
 
 
 def main():
