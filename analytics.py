@@ -143,3 +143,20 @@ def average_per_day():
 
     unique_days = set(date for date, time in rows)
     return len(rows) / len(unique_days)
+
+
+def daily_limit_progress():
+    """
+    Returns (today_count, daily_limit, percentage) so the dashboard
+    can show a progress bar. Percentage is capped at 100 even if
+    the user has exceeded their limit, so the bar doesn't overflow.
+    """
+    today_count = count_today()
+    daily_limit = settings.load_settings()["daily_limit"]
+
+    if daily_limit <= 0:
+        percentage = 0  # avoid dividing by zero if limit is somehow 0
+    else:
+        percentage = min(100, int((today_count / daily_limit) * 100))
+
+    return today_count, daily_limit, percentage

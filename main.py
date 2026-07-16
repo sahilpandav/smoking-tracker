@@ -76,6 +76,11 @@ class SmokingTrackerApp:
             font=("Segoe UI", 11, "bold"),
             padding=10,
         )
+        style.configure(
+            "Limit.Horizontal.TProgressbar",
+            troughcolor=config.COLOR_BG_SECONDARY,
+            background=config.COLOR_SUCCESS,
+        )
 
     def _build_dashboard(self):
         """Builds the full dashboard layout: title, stat cards, and action button."""
@@ -103,6 +108,20 @@ class SmokingTrackerApp:
             row = index // 4
             column = index % 4
             self._create_stat_card(cards_frame, key, display_name, row, column)
+
+        progress_frame = tk.Frame(self.root, bg=config.COLOR_BG)
+        progress_frame.pack(pady=(10, 0), fill="x", padx=60)
+
+        self.progress_label = ttk.Label(progress_frame, text="", style="TLabel")
+        self.progress_label.pack(anchor="w")
+
+        self.progress_bar = ttk.Progressbar(
+            progress_frame,
+            orient="horizontal",
+            mode="determinate",
+            style="Limit.Horizontal.TProgressbar",
+        )
+        self.progress_bar.pack(fill="x", pady=(5, 0))
 
         button_frame = tk.Frame(self.root, bg=config.COLOR_BG)
         button_frame.pack(pady=25)
@@ -160,8 +179,9 @@ class SmokingTrackerApp:
     def refresh_stats(self):
         """
         Recalculates every stat from analytics.py and updates each
-        card's value label. Called once at startup, and again every
-        time an entry is added.
+        card's value label, plus the daily limit progress bar.
+        Called once at startup, and again every time an entry
+        is added, deleted, or settings change.
         """
         currency = config.DEFAULT_CURRENCY_SYMBOL
 
@@ -177,6 +197,33 @@ class SmokingTrackerApp:
         self.stat_labels["avg_per_day"].config(
             text=f"{analytics.average_per_day():.1f}"
         )
+
+        self._refresh_progress_bar()
+
+    def _refresh_progress_bar(self):
+        """
+        Updates the daily limit progress bar's fill amount, label
+        text, and color based on how close today's count is to
+        the saved daily limit.
+        """
+        today_count, daily_limit, percentage = analytics.daily_limit_progress()
+
+        self.progress_bar["value"] = percentage
+
+        style = ttk.Style(self.root)
+
+        if today_count >= daily_limit:
+            bar_color = config.COLOR_DANGER
+            status_text = f"{today_count} / {daily_limit} — limit exceeded"
+        elif percentage >= 70:
+            bar_color = config.COLOR_WARNING
+            status_text = f"{today_count} / {daily_limit} cigarettes today"
+        else:
+            bar_color = config.COLOR_SUCCESS
+            status_text = f"{today_count} / {daily_limit} cigarettes today"
+
+        style.configure("Limit.Horizontal.TProgressbar", background=bar_color)
+        self.progress_label.config(text=status_text)
 
     def on_add_cigarette(self):
         """
