@@ -20,7 +20,7 @@ from entry_dialog import AddEntryDialog
 from history_view import HistoryDialog
 from charts_view import ChartsDialog
 from settings_view import SettingsDialog
-
+from backup_view import BackupDialog
 
 
 class SmokingTrackerApp:
@@ -177,6 +177,14 @@ class SmokingTrackerApp:
         )
         export_pdf_button.grid(row=1, column=1, padx=10, pady=(10, 0))
 
+        backup_button = ttk.Button(
+            button_frame,
+            text="Backup / Restore",
+            style="Accent.TButton",
+            command=self.on_open_backup,
+        )
+        backup_button.grid(row=1, column=2, padx=10, pady=(10, 0))
+
     def _create_stat_card(self, parent, key, display_name, row, column):
         """
         Creates one small 'card' showing a label (e.g. 'Today') and
@@ -281,6 +289,10 @@ class SmokingTrackerApp:
         """Exports a full PDF report and shows where it was saved."""
         filepath = reports.export_pdf()
         messagebox.showinfo("Export Complete", f"PDF saved to:\n{filepath}")
+
+    def on_open_backup(self):
+        """Called when 'Backup / Restore' is clicked. Opens the backup popup."""
+        BackupDialog(self.root)
 
 
 def main():
