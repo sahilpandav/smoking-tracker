@@ -16,3 +16,6 @@ logs/*.log
 
 .DS_Store
 Thumbs.db
+
+# Personal settings (price, daily limit) — not shared publicly
+database/settings.json

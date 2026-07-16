@@ -30,6 +30,7 @@ ICONS_DIR = os.path.join(BASE_DIR, "assets", "icons")
 # DATABASE FILE
 # ---------------------------------------------------------
 DATABASE_FILE = os.path.join(DATABASE_DIR, "smoking_tracker.db")
+SETTINGS_FILE = os.path.join(DATABASE_DIR, "settings.json")
 
 # ---------------------------------------------------------
 # APP INFO
