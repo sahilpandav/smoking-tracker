@@ -15,7 +15,15 @@ import os
 # ---------------------------------------------------------
 # BASE DIRECTORY
 # ---------------------------------------------------------
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+import sys
+
+if getattr(sys, "frozen", False):
+    # Running as a PyInstaller-built .exe — use the folder the .exe
+    # itself lives in, not the temporary extraction folder.
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    # Running normally as a .py script (what we've been doing this whole time)
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # ---------------------------------------------------------
 # FOLDER PATHS

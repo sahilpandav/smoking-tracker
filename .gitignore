@@ -19,3 +19,8 @@ Thumbs.db
 
 # Personal settings (price, daily limit) — not shared publicly
 database/settings.json
+
+# PyInstaller build artifacts
+build/
+dist/
+*.spec
