@@ -11,6 +11,8 @@ from tkinter import ttk, messagebox
 import config
 import tracker
 
+from entry_dialog import AddEntryDialog
+
 
 class HistoryDialog:
     """
@@ -21,6 +23,7 @@ class HistoryDialog:
     """
 
     def __init__(self, parent, on_changed):
+        self.parent = parent
         self.on_changed = on_changed
 
         self.window = tk.Toplevel(parent)
@@ -65,6 +68,7 @@ class HistoryDialog:
             self.tree.column(col, width=widths[col], anchor="w")
 
         self.tree.pack(fill="both", expand=True, padx=15, pady=(15, 5))
+        self.tree.bind("<Double-1>", self.on_double_click_row)
 
         # Scrollbar linked to the tree's vertical view
         scrollbar = ttk.Scrollbar(self.window, orient="vertical", command=self.tree.yview)
@@ -72,13 +76,48 @@ class HistoryDialog:
         scrollbar.pack(side="right", fill="y")
 
     def _build_delete_button(self):
+        button_row = tk.Frame(self.window, bg=config.COLOR_BG)
+        button_row.pack(pady=10)
+
+        edit_button = ttk.Button(
+            button_row,
+            text="Edit Selected Entry",
+            style="Accent.TButton",
+            command=self.on_edit_selected,
+        )
+        edit_button.grid(row=0, column=0, padx=5)
+
         delete_button = ttk.Button(
-            self.window,
+            button_row,
             text="Delete Selected Entry",
             style="Accent.TButton",
             command=self.on_delete_selected,
         )
-        delete_button.pack(pady=10)
+        delete_button.grid(row=0, column=1, padx=5)
+
+    def on_double_click_row(self, event):
+        """Double-clicking a row opens it for editing, as a shortcut."""
+        self.on_edit_selected()
+
+    def on_edit_selected(self):
+        """Opens the edit popup for whichever row is currently selected."""
+        selected = self.tree.selection()
+
+        if not selected:
+            messagebox.showinfo("No Selection", "Please select an entry to edit first.")
+            return
+
+        entry_id = int(selected[0])
+        AddEntryDialog(self.parent, on_saved=self._on_edit_saved, entry_id=entry_id)
+
+    def _on_edit_saved(self):
+        """
+        Called after an edit is saved. Refreshes this history table
+        AND tells main.py's dashboard to refresh too (edited mood/
+        trigger could matter for future stats/charts).
+        """
+        self.load_entries()
+        self.on_changed()
 
     def load_entries(self):
         """

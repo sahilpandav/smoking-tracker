@@ -83,3 +83,40 @@ def delete_entry_by_id(entry_id):
 
     connection.commit()
     connection.close()
+
+def update_entry(entry_id, trigger=None, mood_before=None, mood_after=None, note=None):
+    """
+    Updates the trigger, mood, and note fields of an existing entry,
+    identified by its id. Date and time are never changed by an edit —
+    only the detail fields are.
+    """
+    connection = database.get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        UPDATE entries
+        SET trigger = ?, mood_before = ?, mood_after = ?, note = ?
+        WHERE id = ?
+    """, (trigger, mood_before, mood_after, note, entry_id))
+
+    connection.commit()
+    connection.close()
+
+
+def get_entry_by_id(entry_id):
+    """
+    Fetches a single entry by its id. Returns one tuple, or None
+    if no entry with that id exists.
+    """
+    connection = database.get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT id, date, time, trigger, mood_before, mood_after, note
+        FROM entries
+        WHERE id = ?
+    """, (entry_id,))
+
+    row = cursor.fetchone()
+    connection.close()
+    return row

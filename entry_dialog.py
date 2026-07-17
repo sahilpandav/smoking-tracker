@@ -26,32 +26,37 @@ MOOD_OPTIONS = [
 
 class AddEntryDialog:
     """
-    Builds and manages the popup window for adding a detailed entry.
+    Builds and manages the popup window for adding OR editing an entry.
+
+    If entry_id is None, this creates a new entry (original behavior).
+    If entry_id is provided, this loads and edits that existing entry.
 
     on_saved is a function passed in from main.py — we call it after
     a successful save so the dashboard knows to refresh itself.
     """
 
-    def __init__(self, parent, on_saved):
+    def __init__(self, parent, on_saved, entry_id=None):
         self.on_saved = on_saved
+        self.entry_id = entry_id  # None = adding new, otherwise = editing this id
 
-        # Toplevel creates a new window, separate from the main one,
-        # but parent tells Tkinter which window "owns" it.
         self.window = tk.Toplevel(parent)
-        self.window.title("Add Entry")
+        self.window.title("Edit Entry" if entry_id else "Add Entry")
         self.window.geometry("400x420")
         self.window.configure(bg=config.COLOR_BG)
         self.window.resizable(False, False)
 
-        # Makes this popup "modal" — the user must deal with it
-        # before clicking back on the main window.
         self.window.transient(parent)
         self.window.grab_set()
 
         self._build_form()
 
+        # If editing, pre-fill the form with this entry's current values
+        if self.entry_id is not None:
+            self._load_existing_values()
+
     def _build_form(self):
-        title_label = ttk.Label(self.window, text="Log a Cigarette", style="Title.TLabel")
+        title_text = "Edit Entry" if self.entry_id else "Log a Cigarette"
+        title_label = ttk.Label(self.window, text=title_text, style="Title.TLabel")
         title_label.pack(pady=(20, 15))
 
         # --- Trigger dropdown ---
@@ -63,7 +68,7 @@ class AddEntryDialog:
             self.window,
             textvariable=self.trigger_var,
             values=TRIGGER_OPTIONS,
-            state="readonly",  # user can only pick from the list, not type freely
+            state="readonly",
         )
         trigger_dropdown.pack(fill="x", padx=30, pady=(0, 15))
 
@@ -97,46 +102,74 @@ class AddEntryDialog:
         note_label = ttk.Label(self.window, text="Note (optional)", style="TLabel")
         note_label.pack(anchor="w", padx=30)
 
-        # tk.Text, not ttk — ttk has no multi-line text widget.
         self.note_text = tk.Text(
             self.window,
             height=4,
             bg=config.COLOR_BG_SECONDARY,
             fg=config.COLOR_TEXT,
-            insertbackground=config.COLOR_TEXT,  # cursor color
+            insertbackground=config.COLOR_TEXT,
             relief="flat",
         )
         self.note_text.pack(fill="x", padx=30, pady=(0, 20))
 
         # --- Save button ---
+        save_text = "Save Changes" if self.entry_id else "Save Entry"
         save_button = ttk.Button(
             self.window,
-            text="Save Entry",
+            text=save_text,
             style="Accent.TButton",
             command=self._on_save,
         )
         save_button.pack(pady=5)
 
+    def _load_existing_values(self):
+        """
+        Fetches the existing entry's data and fills the form fields
+        with it, so editing starts from the current values instead
+        of blank defaults.
+        """
+        entry = tracker.get_entry_by_id(self.entry_id)
+        if entry is None:
+            return  # entry was deleted elsewhere; form just stays at defaults
+
+        _id, date, time, trigger, mood_before, mood_after, note = entry
+
+        if trigger:
+            self.trigger_var.set(trigger)
+        if mood_before:
+            self.mood_before_var.set(mood_before)
+        if mood_after:
+            self.mood_after_var.set(mood_after)
+        if note:
+            self.note_text.insert("1.0", note)
+
     def _on_save(self):
         """
-        Reads all form values, saves the entry via tracker.py,
-        notifies main.py to refresh, then closes this popup.
+        Reads all form values, then either creates a new entry or
+        updates the existing one, depending on whether entry_id
+        was provided when this dialog was opened.
         """
         trigger = self.trigger_var.get()
         mood_before = self.mood_before_var.get()
         mood_after = self.mood_after_var.get()
-
-        # "1.0" means "line 1, character 0" — Tkinter's way of saying
-        # "start of the text box." "end-1c" means "end, minus 1 character"
-        # which strips the automatic trailing newline Tkinter adds.
         note = self.note_text.get("1.0", "end-1c").strip()
+        note = note if note else None
 
-        tracker.add_entry(
-            trigger=trigger,
-            mood_before=mood_before,
-            mood_after=mood_after,
-            note=note if note else None,
-        )
+        if self.entry_id is None:
+            tracker.add_entry(
+                trigger=trigger,
+                mood_before=mood_before,
+                mood_after=mood_after,
+                note=note,
+            )
+        else:
+            tracker.update_entry(
+                self.entry_id,
+                trigger=trigger,
+                mood_before=mood_before,
+                mood_after=mood_after,
+                note=note,
+            )
 
         self.on_saved()
         self.window.destroy()
