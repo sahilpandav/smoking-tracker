@@ -47,16 +47,27 @@ WINDOW_MIN_WIDTH = 800
 WINDOW_MIN_HEIGHT = 500
 
 # ---------------------------------------------------------
-# COLOR THEME (Dark mode)
+# COLOR THEME
+# A calm, health-focused dark palette — deliberately not the
+# common purple/pink "AI dark mode" look. Built around one
+# grounded green accent (growth/progress), used sparingly.
 # ---------------------------------------------------------
-COLOR_BG = "#1e1e2e"
-COLOR_BG_SECONDARY = "#282838"
-COLOR_TEXT = "#ffffff"
-COLOR_TEXT_MUTED = "#a0a0b0"
-COLOR_ACCENT = "#f38ba8"
-COLOR_SUCCESS = "#a6e3a1"
-COLOR_WARNING = "#f9e2af"
-COLOR_DANGER = "#eb6f92"
+COLOR_BG = "#0F1512"            # near-black, slight green undertone
+COLOR_BG_SECONDARY = "#1A2420"  # cards/panels, one step lighter than bg
+COLOR_SIDEBAR = "#131A16"       # sidebar — sits between bg and card in value
+COLOR_TEXT = "#EDEEE9"          # warm off-white, not pure white
+COLOR_TEXT_MUTED = "#8A9591"    # muted sage-grey for secondary text
+COLOR_ACCENT = "#4FB477"        # the ONE accent — grounded green
+COLOR_ACCENT_DIM = "#2E4038"    # accent's low-opacity equivalent, for subtle fills
+COLOR_SUCCESS = "#4FB477"       # same as accent — success IS the brand color here
+COLOR_WARNING = "#D97A56"       # warm amber-orange
+COLOR_DANGER = "#C15B4F"        # muted brick red, not neon — informational, not alarming
+COLOR_BORDER = "#243029"        # subtle hairline borders/dividers
+
+# ---------------------------------------------------------
+# LAYOUT
+# ---------------------------------------------------------
+SIDEBAR_WIDTH = 190
 
 # ---------------------------------------------------------
 # DEFAULT USER SETTINGS

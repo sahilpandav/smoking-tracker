@@ -48,7 +48,7 @@ class SmokingTrackerApp:
         self.root.configure(bg=config.COLOR_BG)
 
     def _setup_style(self):
-        """Configures the ttk theme so widgets match our dark color scheme."""
+        """Configures the ttk theme so widgets match our color scheme."""
         style = ttk.Style(self.root)
         style.theme_use("clam")
 
@@ -59,28 +59,71 @@ class SmokingTrackerApp:
             font=("Segoe UI", 11),
         )
         style.configure(
+            "Muted.TLabel",
+            background=config.COLOR_BG,
+            foreground=config.COLOR_TEXT_MUTED,
+            font=("Segoe UI", 10),
+        )
+        style.configure(
             "Title.TLabel",
             background=config.COLOR_BG,
             foreground=config.COLOR_TEXT,
-            font=("Segoe UI", 20, "bold"),
+            font=("Segoe UI Semibold", 18),
         )
         style.configure(
             "CardTitle.TLabel",
             background=config.COLOR_BG_SECONDARY,
             foreground=config.COLOR_TEXT_MUTED,
-            font=("Segoe UI", 10),
+            font=("Segoe UI", 9),
         )
         style.configure(
             "CardValue.TLabel",
             background=config.COLOR_BG_SECONDARY,
-            foreground=config.COLOR_ACCENT,
-            font=("Segoe UI", 22, "bold"),
+            foreground=config.COLOR_TEXT,
+            font=("Segoe UI Semibold", 20),
         )
         style.configure(
-            "Accent.TButton",
-            font=("Segoe UI", 11, "bold"),
-            padding=10,
+            "RingBig.TLabel",
+            background=config.COLOR_BG,
+            foreground=config.COLOR_TEXT,
+            font=("Segoe UI Semibold", 34),
         )
+        style.configure(
+            "RingSmall.TLabel",
+            background=config.COLOR_BG,
+            foreground=config.COLOR_TEXT_MUTED,
+            font=("Segoe UI", 11),
+        )
+
+        # Primary action — filled, accent-colored, used ONCE (Add Cigarette)
+        style.configure(
+            "Primary.TButton",
+            font=("Segoe UI Semibold", 11),
+            padding=(16, 10),
+            background=config.COLOR_ACCENT,
+            foreground="#0B120E",
+            borderwidth=0,
+        )
+        style.map(
+            "Primary.TButton",
+            background=[("active", "#3F9A63")],
+        )
+
+        # Sidebar nav buttons — flat, quiet, left-aligned
+        style.configure(
+            "Nav.TButton",
+            font=("Segoe UI", 10),
+            padding=(14, 9),
+            background=config.COLOR_SIDEBAR,
+            foreground=config.COLOR_TEXT,
+            borderwidth=0,
+            anchor="w",
+        )
+        style.map(
+            "Nav.TButton",
+            background=[("active", config.COLOR_BG_SECONDARY)],
+        )
+
         style.configure(
             "Limit.Horizontal.TProgressbar",
             troughcolor=config.COLOR_BG_SECONDARY,
@@ -88,112 +131,138 @@ class SmokingTrackerApp:
         )
 
     def _build_dashboard(self):
-        """Builds the full dashboard layout: title, stat cards, and action button."""
-        title_label = ttk.Label(self.root, text=config.APP_NAME, style="Title.TLabel")
-        title_label.pack(pady=(20, 10))
+        """
+        Builds the full window layout: a left sidebar for navigation
+        (grouped by purpose), and a main panel led by today's progress
+        ring, with secondary stats below it.
+        """
+        # Root-level horizontal split: sidebar on the left, main content on the right.
+        self.root.grid_columnconfigure(1, weight=1)
+        self.root.grid_rowconfigure(0, weight=1)
 
-        # A frame is an invisible container used to group and position other widgets.
-        cards_frame = tk.Frame(self.root, bg=config.COLOR_BG)
-        cards_frame.pack(pady=10)
+        self._build_sidebar()
+        self._build_main_panel()
 
-        # Each tuple is: (key used internally, label shown to user)
+    def _build_sidebar(self):
+        """
+        Left navigation column. Buttons are grouped by purpose with
+        small section labels, instead of one flat row of 8 buttons.
+        """
+        sidebar = tk.Frame(self.root, bg=config.COLOR_SIDEBAR, width=config.SIDEBAR_WIDTH)
+        sidebar.grid(row=0, column=0, sticky="ns")
+        sidebar.grid_propagate(False)
+
+        app_name_label = ttk.Label(
+            sidebar, text=config.APP_NAME, style="Title.TLabel",
+            background=config.COLOR_SIDEBAR,
+        )
+        app_name_label.pack(anchor="w", padx=20, pady=(24, 30))
+
+        self._build_nav_section(sidebar, "TRACK", [
+            ("View History", self.on_view_history),
+            ("View Charts", self.on_view_charts),
+        ])
+
+        self._build_nav_section(sidebar, "MANAGE", [
+            ("Settings", self.on_open_settings),
+            ("Backup / Restore", self.on_open_backup),
+        ])
+
+        self._build_nav_section(sidebar, "REPORTS", [
+            ("Export CSV", self.on_export_csv),
+            ("Export PDF", self.on_export_pdf),
+        ])
+
+        self._build_nav_section(sidebar, "OTHER", [
+            ("Send Test Reminder", self.on_test_notification),
+        ])
+
+    def _build_nav_section(self, parent, section_title, buttons):
+        """
+        Renders one labeled group of nav buttons in the sidebar,
+        e.g. "TRACK" containing History and Charts. This is what
+        replaces the old flat 4x2 button grid — buttons are now
+        grouped by what they're actually for.
+        """
+        section_label = ttk.Label(
+            parent, text=section_title, style="Muted.TLabel",
+            background=config.COLOR_SIDEBAR,
+        )
+        section_label.pack(anchor="w", padx=20, pady=(14, 4))
+
+        for label_text, command in buttons:
+            button = ttk.Button(
+                parent, text=label_text, style="Nav.TButton", command=command,
+            )
+            button.pack(fill="x", padx=10, pady=1)
+
+    def _build_main_panel(self):
+        """
+        Right-hand content area: the "+ Add Cigarette" primary action,
+        the today progress ring (the app's signature visual), and
+        secondary stat cards below it.
+        """
+        main_panel = tk.Frame(self.root, bg=config.COLOR_BG)
+        main_panel.grid(row=0, column=1, sticky="nsew")
+        main_panel.grid_columnconfigure(0, weight=1)
+
+        top_bar = tk.Frame(main_panel, bg=config.COLOR_BG)
+        top_bar.pack(fill="x", padx=30, pady=(24, 0))
+
+        add_button = ttk.Button(
+            top_bar, text="+  Add Cigarette", style="Primary.TButton",
+            command=self.on_add_cigarette,
+        )
+        add_button.pack(anchor="e")
+
+        self._build_progress_ring(main_panel)
+        self._build_secondary_stats(main_panel)
+
+    def _build_progress_ring(self, parent):
+        """
+        The signature visual: a circular ring showing today's count
+        against the daily limit, drawn on a plain tk.Canvas. Replaces
+        the old horizontal progress bar as the app's central focus.
+        """
+        ring_frame = tk.Frame(parent, bg=config.COLOR_BG)
+        ring_frame.pack(pady=(10, 20))
+
+        self.ring_canvas = tk.Canvas(
+            ring_frame, width=220, height=220,
+            bg=config.COLOR_BG, highlightthickness=0,
+        )
+        self.ring_canvas.pack()
+
+        # Text is placed on the canvas itself, centered inside the ring.
+        self.ring_value_text = self.ring_canvas.create_text(
+            110, 100, text="0", font=("Segoe UI Semibold", 34), fill=config.COLOR_TEXT,
+        )
+        self.ring_sub_text = self.ring_canvas.create_text(
+            110, 135, text="of 0 today", font=("Segoe UI", 11), fill=config.COLOR_TEXT_MUTED,
+        )
+
+        self.progress_label = ttk.Label(ring_frame, text="", style="Muted.TLabel")
+        self.progress_label.pack(pady=(10, 0))
+
+    def _build_secondary_stats(self, parent):
+        """Smaller supporting stat cards, arranged in a single row below the ring."""
+        cards_frame = tk.Frame(parent, bg=config.COLOR_BG)
+        cards_frame.pack(pady=(10, 20))
+
         stat_definitions = [
-            ("today", "Today"),
             ("yesterday", "Yesterday"),
             ("week", "This Week"),
             ("month", "This Month"),
             ("lifetime", "Lifetime"),
-            ("streak", "Current Streak"),
+            ("streak", "Streak"),
             ("money_today", "Spent Today"),
-            ("avg_per_day", "Avg per Day"),
+            ("avg_per_day", "Avg / Day"),
         ]
 
-        # Arrange 4 cards per row using grid positions.
         for index, (key, display_name) in enumerate(stat_definitions):
             row = index // 4
             column = index % 4
             self._create_stat_card(cards_frame, key, display_name, row, column)
-
-        progress_frame = tk.Frame(self.root, bg=config.COLOR_BG)
-        progress_frame.pack(pady=(10, 0), fill="x", padx=60)
-
-        self.progress_label = ttk.Label(progress_frame, text="", style="TLabel")
-        self.progress_label.pack(anchor="w")
-
-        self.progress_bar = ttk.Progressbar(
-            progress_frame,
-            orient="horizontal",
-            mode="determinate",
-            style="Limit.Horizontal.TProgressbar",
-        )
-        self.progress_bar.pack(fill="x", pady=(5, 0))
-
-        button_frame = tk.Frame(self.root, bg=config.COLOR_BG)
-        button_frame.pack(pady=25)
-
-        add_button = ttk.Button(
-            button_frame,
-            text="+ Add Cigarette",
-            style="Accent.TButton",
-            command=self.on_add_cigarette,
-        )
-        add_button.grid(row=0, column=0, padx=10)
-
-        history_button = ttk.Button(
-            button_frame,
-            text="View History",
-            style="Accent.TButton",
-            command=self.on_view_history,
-        )
-        history_button.grid(row=0, column=1, padx=10)
-
-        charts_button = ttk.Button(
-            button_frame,
-            text="View Charts",
-            style="Accent.TButton",
-            command=self.on_view_charts,
-        )
-        charts_button.grid(row=0, column=2, padx=10)
-
-        settings_button = ttk.Button(
-            button_frame,
-            text="Settings",
-            style="Accent.TButton",
-            command=self.on_open_settings,
-        )
-        settings_button.grid(row=0, column=3, padx=10)
-
-        export_csv_button = ttk.Button(
-            button_frame,
-            text="Export CSV",
-            style="Accent.TButton",
-            command=self.on_export_csv,
-        )
-        export_csv_button.grid(row=1, column=0, padx=10, pady=(10, 0))
-
-        export_pdf_button = ttk.Button(
-            button_frame,
-            text="Export PDF",
-            style="Accent.TButton",
-            command=self.on_export_pdf,
-        )
-        export_pdf_button.grid(row=1, column=1, padx=10, pady=(10, 0))
-
-        backup_button = ttk.Button(
-            button_frame,
-            text="Backup / Restore",
-            style="Accent.TButton",
-            command=self.on_open_backup,
-        )
-        backup_button.grid(row=1, column=2, padx=10, pady=(10, 0))
-
-        test_notification_button = ttk.Button(
-            button_frame,
-            text="Send Test Reminder",
-            style="Accent.TButton",
-            command=self.on_test_notification,
-        )
-        test_notification_button.grid(row=1, column=3, padx=10, pady=(10, 0))
 
     def _create_stat_card(self, parent, key, display_name, row, column):
         """
@@ -222,7 +291,7 @@ class SmokingTrackerApp:
         """
         currency = config.DEFAULT_CURRENCY_SYMBOL
 
-        self.stat_labels["today"].config(text=str(analytics.count_today()))
+        #!self.stat_labels["today"].config(text=str(analytics.count_today()))
         self.stat_labels["yesterday"].config(text=str(analytics.count_yesterday()))
         self.stat_labels["week"].config(text=str(analytics.count_this_week()))
         self.stat_labels["month"].config(text=str(analytics.count_this_month()))
@@ -239,27 +308,50 @@ class SmokingTrackerApp:
 
     def _refresh_progress_bar(self):
         """
-        Updates the daily limit progress bar's fill amount, label
-        text, and color based on how close today's count is to
-        the saved daily limit.
+        Redraws the progress ring based on today's count vs. the
+        daily limit: an arc fills proportionally, colored green/
+        amber/red depending on how close to or over the limit.
         """
         today_count, daily_limit, percentage = analytics.daily_limit_progress()
 
-        self.progress_bar["value"] = percentage
-
-        style = ttk.Style(self.root)
+        # Remove the previous ring drawing before drawing the new one —
+        # Canvas doesn't auto-clear, so old arcs would stack up otherwise.
+        self.ring_canvas.delete("ring_arc")
 
         if today_count >= daily_limit:
-            bar_color = config.COLOR_DANGER
-            status_text = f"{today_count} / {daily_limit} — limit exceeded"
+            ring_color = config.COLOR_DANGER
+            status_text = "Limit reached for today"
         elif percentage >= 70:
-            bar_color = config.COLOR_WARNING
-            status_text = f"{today_count} / {daily_limit} cigarettes today"
+            ring_color = config.COLOR_WARNING
+            status_text = "Getting close to your limit"
         else:
-            bar_color = config.COLOR_SUCCESS
-            status_text = f"{today_count} / {daily_limit} cigarettes today"
+            ring_color = config.COLOR_ACCENT
+            status_text = "Within your daily limit"
 
-        style.configure("Limit.Horizontal.TProgressbar", background=bar_color)
+        # Background track (the full, unfilled circle), drawn first so
+        # the colored arc sits visually on top of it.
+        self.ring_canvas.create_oval(
+            15, 15, 205, 205,
+            outline=config.COLOR_BG_SECONDARY, width=14,
+            tags="ring_arc",
+        )
+
+        # The filled portion. Angles in Tkinter go counter-clockwise from
+        # 3 o'clock by default, so start=90 begins at the top of the circle,
+        # and a negative extent sweeps clockwise — the natural reading direction.
+        sweep_angle = 360 * (percentage / 100)
+        if sweep_angle > 0:
+            self.ring_canvas.create_arc(
+                15, 15, 205, 205,
+                start=90, extent=-sweep_angle,
+                style="arc", outline=ring_color, width=14,
+                tags="ring_arc",
+            )
+
+        # Update the text sitting in the center of the ring.
+        self.ring_canvas.itemconfig(self.ring_value_text, text=str(today_count), fill=config.COLOR_TEXT)
+        self.ring_canvas.itemconfig(self.ring_sub_text, text=f"of {daily_limit} today")
+
         self.progress_label.config(text=status_text)
 
     def _start_notification_scheduler(self):
